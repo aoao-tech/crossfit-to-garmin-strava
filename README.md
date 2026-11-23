@@ -38,7 +38,10 @@ check:
 1. **Ask Arbox: did you book a class that day?**
 2. **Yes** → you were at your home box → write the **Arbox** WOD.
 3. **No** → you must have been at the **second box** → write that box's WOD instead.
-4. **Can't reach Arbox to check** → assume your home box (the usual case).
+
+(The booking check and the WOD fetch are separate Arbox calls. If only the booking check fails, it
+assumes your home box rather than misrouting to the second box. If Arbox is unreachable altogether,
+there's no WOD to fetch, so nothing is written that day.)
 
 So your home box is the default, and the second box is used only on a day you had no Arbox booking.
 It looks up the correct week for each day, so a session synced a day or two later — even one from

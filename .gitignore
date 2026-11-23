@@ -1,0 +1,43 @@
+# Secrets and env
+.env
+.env.*
+!.env.example
+
+# Traffic captures: never committed (public repo, may hold other members data)
+*.har
+captures/
+captures/raw/
+*.flows
+*.mitm
+
+# Android packages
+*.apk
+*.apks
+*.xapk
+apks/
+
+# Token caches and state (any extension; these never belong in the repo)
+.garminconnect/
+garmin_tokens*
+arbox_token*
+crossfitey_session*
+*.token
+*token*.txt
+*session*.json
+state*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+
+# Personal values the pre-commit hook blocks (never committed)
+.personal-patterns
+.garmin-to-arbox/

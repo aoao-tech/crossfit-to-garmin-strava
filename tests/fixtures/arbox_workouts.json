@@ -1,0 +1,21 @@
+{
+  "data": [
+    [
+      [
+        {"id": 1000, "name": "2026-11-22", "comment": "3 SETS\n15 SAMPLE RING ROWS",
+         "box_sections": {"id": 1000, "name": "ACCESSORY WORK"}, "workout_type": {"id": 1000, "name": "General"},
+         "box_categories": {"id": 1000, "name": "CrossFit"}}
+      ],
+      [
+        {"id": 1001, "name": "2026-11-22", "comment": "5-5-4-3-2\nSAMPLE PULL UPS",
+         "box_sections": {"id": 1001, "name": "Strength"}, "workout_type": {"id": 1000, "name": "General"},
+         "box_categories": {"id": 1000, "name": "CrossFit"}}
+      ],
+      [
+        {"id": 1002, "name": "2026-11-22", "comment": "12 SAMPLE PUSH PRESS\n14 SAMPLE TOES TO BAR\n\nSCORE: ROUNDS + REPS",
+         "box_sections": {"id": 1002, "name": "Metcon"}, "workout_type": {"id": 1001, "name": "AMRAP"},
+         "box_categories": {"id": 1000, "name": "CrossFit"}}
+      ]
+    ]
+  ]
+}

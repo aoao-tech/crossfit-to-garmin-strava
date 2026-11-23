@@ -1,0 +1,16 @@
+#!/bin/sh
+# Blocks pushes to any GitHub owner other than the allowed one.
+ALLOWED_OWNER="aoao-tech"
+url="$2"
+case "$url" in
+  *github.com/"$ALLOWED_OWNER"/*|*github.com:"$ALLOWED_OWNER"/*) ;;
+  *) echo "pre-push: blocked push to $url (only $ALLOWED_OWNER is allowed)." >&2; exit 1 ;;
+esac
+if command -v gh >/dev/null 2>&1; then
+  active=$(gh api user --jq .login 2>/dev/null)
+  if [ "$active" != "$ALLOWED_OWNER" ]; then
+    echo "pre-push: active GitHub CLI account is '$active', not $ALLOWED_OWNER. Run: gh auth switch -u $ALLOWED_OWNER" >&2
+    exit 1
+  fi
+fi
+exit 0

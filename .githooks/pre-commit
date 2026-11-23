@@ -1,0 +1,45 @@
+#!/bin/sh
+# Blocks commits that contain secrets or personal values.
+# 1) gitleaks scans staged changes for secrets (tokens, keys, passwords).
+# 2) Every non-empty line of the gitignored file .personal-patterns
+#    (your email, phone, name, box IDs...) must not appear in staged changes.
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  WINGET_LINKS="$LOCALAPPDATA/Microsoft/WinGet/Links"
+  [ -x "$WINGET_LINKS/gitleaks.exe" ] && PATH="$WINGET_LINKS:$PATH"
+fi
+if ! command -v gitleaks >/dev/null 2>&1; then
+  for d in "$LOCALAPPDATA"/Microsoft/WinGet/Packages/Gitleaks.Gitleaks_*; do
+    [ -x "$d/gitleaks.exe" ] && PATH="$d:$PATH"
+  done
+fi
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not found. Install it (winget install Gitleaks.Gitleaks) before committing." >&2
+  exit 1
+fi
+
+gitleaks git --pre-commit --staged --redact --no-banner || {
+  echo "pre-commit: gitleaks found a possible secret. Commit blocked." >&2
+  exit 1
+}
+
+if [ -f .personal-patterns ]; then
+  # Lowercase both sides (grep -i is broken in some Git Bash builds) and fail closed.
+  staged=$(git diff --cached -U0 --no-color | grep '^+' | grep -v '^+++' | tr '[:upper:]' '[:lower:]')
+  while IFS= read -r pattern || [ -n "$pattern" ]; do
+    pattern=$(printf '%s' "$pattern" | tr -d '' | tr '[:upper:]' '[:lower:]')
+    [ -z "$pattern" ] && continue
+    case "$pattern" in \#*) continue ;; esac
+    printf '%s
+' "$staged" | grep -qF -- "$pattern"
+    rc=$?
+    if [ "$rc" -eq 0 ]; then
+      echo "pre-commit: a value from .personal-patterns appears in staged changes. Commit blocked." >&2
+      exit 1
+    elif [ "$rc" -ne 1 ]; then
+      echo "pre-commit: personal-value check failed to run (grep exit $rc). Commit blocked." >&2
+      exit 1
+    fi
+  done < .personal-patterns
+fi
+exit 0

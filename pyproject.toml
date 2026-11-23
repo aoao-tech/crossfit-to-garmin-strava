@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "garmin-to-arbox"
+version = "0.1.0"
+description = "Sync Arbox CrossFit WODs into Garmin Connect activity titles and descriptions"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+  "garminconnect==0.3.20",
+  "curl_cffi==0.17.0",
+  "requests>=2.32",
+  "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5"]
+
+[project.scripts]
+garmin-to-arbox = "arbox_sync.cli:main"
+
+[tool.setuptools]
+packages = ["arbox_sync"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

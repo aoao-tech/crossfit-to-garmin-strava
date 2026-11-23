@@ -1,0 +1,100 @@
+# Writes each day's Arbox WOD into that day's Garmin HIIT/cardio activity.
+# Runs every 2 days in the evening (Israel time) and can be started by hand.
+# Logs print counts only, never names, IDs, tokens or workout text.
+# A failed login fails the run, so GitHub emails the repository owner.
+name: sync
+
+on:
+  schedule:
+    # 18:00 UTC = 20:00 (winter) / 21:00 (summer) in Israel, every 2nd day of the month.
+    - cron: "0 18 */2 * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Last day to process (YYYY-MM-DD). Empty = today."
+        required: false
+        default: ""
+      backfill:
+        description: "How many days to process, ending at the date."
+        required: false
+        default: "3"
+      dry_run:
+        description: "Preview only, write nothing."
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install --quiet .
+
+      - name: Restore Garmin tokens from secret
+        env:
+          GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
+        run: |
+          if [ -z "$GARMIN_TOKENS" ]; then
+            echo "::error::GARMIN_TOKENS secret is not set. Run 'garmin login' on your computer and add it."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$GARMIN_TOKENS" > "$RUNNER_TEMP/garmin_tokens.json"
+          sha256sum "$RUNNER_TEMP/garmin_tokens.json" | cut -d' ' -f1 > "$RUNNER_TEMP/tokens.sha"
+
+      - name: Sync
+        env:
+          GARMIN_TOKEN_PATH: ${{ runner.temp }}/garmin_tokens.json
+          ARBOX_TOKEN: ${{ secrets.ARBOX_TOKEN }}
+          # Optional second box. Empty when the secret is not set: the sync then uses Arbox only.
+          CROSSFITEY_SESSION: ${{ secrets.CROSSFITEY_SESSION }}
+          INPUT_DATE: ${{ inputs.date }}
+          INPUT_BACKFILL: ${{ inputs.backfill }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ -z "$ARBOX_TOKEN" ]; then
+            echo "::error::ARBOX_TOKEN secret is not set. Run 'arbox login' on your computer and add it."
+            exit 1
+          fi
+          args=(sync --backfill "${INPUT_BACKFILL:-3}")
+          if [ -n "$INPUT_DATE" ]; then args+=(--date "$INPUT_DATE"); fi
+          if [ "$INPUT_DRY_RUN" != "true" ]; then args+=(--apply); fi
+          python -m arbox_sync "${args[@]}"
+
+      - name: Save refreshed Garmin tokens back to the secret
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.SECRETS_PAT }}
+        run: |
+          f="$RUNNER_TEMP/garmin_tokens.json"
+          [ -f "$f" ] || exit 0
+          if [ "$(sha256sum "$f" | cut -d' ' -f1)" = "$(cat "$RUNNER_TEMP/tokens.sha")" ]; then
+            echo "Tokens unchanged."
+            exit 0
+          fi
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Garmin refreshed the tokens but SECRETS_PAT is not set, so they were not saved."
+            exit 1
+          fi
+          gh secret set GARMIN_TOKENS --repo "$GITHUB_REPOSITORY" < "$f"
+          echo "Saved refreshed tokens."
+        shell: bash
+
+      - name: Remove token file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/garmin_tokens.json"

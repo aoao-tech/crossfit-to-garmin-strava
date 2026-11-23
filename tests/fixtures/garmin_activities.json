@@ -1,0 +1,26 @@
+[
+  {
+    "activityId": 90000000001,
+    "activityName": "Sample City HIIT",
+    "description": null,
+    "startTimeLocal": "2026-11-20 19:05:12",
+    "startTimeGMT": "2026-11-20 17:05:12",
+    "activityType": {"typeId": 100001, "typeKey": "hiit", "parentTypeId": 4}
+  },
+  {
+    "activityId": 90000000002,
+    "activityName": "Sample City Running",
+    "description": "easy run",
+    "startTimeLocal": "2026-11-20 07:00:00",
+    "startTimeGMT": "2026-11-20 05:00:00",
+    "activityType": {"typeId": 1, "typeKey": "running", "parentTypeId": 17}
+  },
+  {
+    "activityId": 90000000003,
+    "activityName": "Sample City HIIT",
+    "description": null,
+    "startTimeLocal": "2026-11-21 00:30:00",
+    "startTimeGMT": "2026-11-20 22:30:00",
+    "activityType": {"typeId": 100001, "typeKey": "hiit", "parentTypeId": 4}
+  }
+]

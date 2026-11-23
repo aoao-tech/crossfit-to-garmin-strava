@@ -1,0 +1,64 @@
+# Read-only check that Garmin accepts our saved tokens from GitHub's servers.
+# Manual trigger only. Logs print counts, never names, IDs or tokens.
+name: garmin-smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install --quiet .
+
+      - name: Restore Garmin tokens from secret
+        env:
+          GARMIN_TOKENS: ${{ secrets.GARMIN_TOKENS }}
+        run: |
+          if [ -z "$GARMIN_TOKENS" ]; then
+            echo "::error::GARMIN_TOKENS secret is not set. Run 'garmin login' at home and add it."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$GARMIN_TOKENS" > "$RUNNER_TEMP/garmin_tokens.json"
+          sha256sum "$RUNNER_TEMP/garmin_tokens.json" | cut -d' ' -f1 > "$RUNNER_TEMP/tokens.sha"
+
+      - name: Garmin read-only check
+        env:
+          GARMIN_TOKEN_PATH: ${{ runner.temp }}/garmin_tokens.json
+        run: python -m arbox_sync garmin check --days 7
+
+      - name: Save rotated tokens back to the secret
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.SECRETS_PAT }}
+        run: |
+          f="$RUNNER_TEMP/garmin_tokens.json"
+          [ -f "$f" ] || exit 0
+          if [ "$(sha256sum "$f" | cut -d' ' -f1)" = "$(cat "$RUNNER_TEMP/tokens.sha")" ]; then
+            echo "Tokens unchanged."
+            exit 0
+          fi
+          echo "Tokens were refreshed by Garmin."
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::Tokens rotated but SECRETS_PAT is not set, so the new tokens were not saved."
+            exit 0
+          fi
+          gh secret set GARMIN_TOKENS --repo "$GITHUB_REPOSITORY" < "$f"
+          echo "Saved refreshed tokens to GARMIN_TOKENS."
+        shell: bash
+
+      - name: Remove token file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/garmin_tokens.json"

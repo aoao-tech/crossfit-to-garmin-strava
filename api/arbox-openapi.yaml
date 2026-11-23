@@ -1,0 +1,354 @@
+openapi: 3.0.0
+info:
+  title: captures/clean.har Mitmproxy2Swagger
+  version: 1.0.0
+servers:
+- url: https://apiappv2.arboxapp.com
+  description: The default server
+paths:
+  /api/v2/user/login:
+    post:
+      summary: POST login
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: number
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      last_name:
+                        type: string
+                      language:
+                        type: string
+                      image:
+                        type: string
+                      token:
+                        type: string
+                      refreshToken:
+                        type: string
+                      last_name_shorten:
+                        type: string
+                      full_name_shorten:
+                        type: string
+                      full_name:
+                        type: string
+                      is_user:
+                        type: boolean
+              example:
+                data:
+                  id: 1000
+                  email: member@example.com
+                  first_name: REDACTED
+                  last_name: REDACTED
+                  language: he
+                  image: REDACTED
+                  token: REDACTED
+                  refreshToken: REDACTED
+                  last_name_shorten: REDACTED
+                  full_name_shorten: REDACTED
+                  full_name: REDACTED
+                  is_user: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+            example:
+              email: member@example.com
+              password: REDACTED
+  /api/v2/logbook/workouts:
+    post:
+      summary: POST workouts
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                            workout_id:
+                              type: number
+                            box_fk:
+                              type: number
+                            box_section_fk:
+                              type: number
+                            scale_fk:
+                              type: object
+                              nullable: true
+                            workout_fk:
+                              type: number
+                            box_category_fk:
+                              type: number
+                            title_section_box_fk:
+                              type: object
+                              nullable: true
+                            name:
+                              type: string
+                            comment:
+                              type: string
+                            skill_reps:
+                              type: object
+                              nullable: true
+                            skill_weight_male_rx:
+                              type: object
+                              nullable: true
+                            skill_weight_female_rx:
+                              type: object
+                              nullable: true
+                            skill_weight_percentage:
+                              type: object
+                              nullable: true
+                            type_instruct:
+                              type: object
+                              nullable: true
+                            rounds:
+                              type: object
+                              nullable: true
+                            total_time:
+                              type: object
+                              nullable: true
+                            total_perfect_time_result_male:
+                              type: object
+                              nullable: true
+                            total_perfect_time_result_female:
+                              type: object
+                              nullable: true
+                            total_perfect_rounds_result_male:
+                              type: object
+                              nullable: true
+                            total_perfect_rounds_result_female:
+                              type: object
+                              nullable: true
+                            total_rounds:
+                              type: object
+                              nullable: true
+                            created_at:
+                              type: string
+                            updated_at:
+                              type: string
+                            deleted_at:
+                              type: object
+                              nullable: true
+                            has_leader_board:
+                              type: boolean
+                            scales:
+                              type: object
+                              nullable: true
+                            box_categories:
+                              type: object
+                              properties:
+                                id:
+                                  type: number
+                                name:
+                                  type: string
+                                color_name:
+                                  type: boolean
+                            box_sections:
+                              type: object
+                              properties:
+                                id:
+                                  type: number
+                                name:
+                                  type: string
+                                order:
+                                  type: number
+                            workout_type:
+                              type: object
+                              properties:
+                                id:
+                                  type: number
+                                name:
+                                  type: string
+                            title_section_box:
+                              type: object
+                              nullable: true
+                            user_result:
+                              type: object
+                              nullable: true
+                            scales_many:
+                              type: object
+                              nullable: true
+                            boxes:
+                              type: object
+                              properties:
+                                id:
+                                  type: number
+                                name:
+                                  type: string
+                                cloudinary_image:
+                                  type: string
+              example:
+                data:
+                - - - id: 1000
+                      workout_id: 1000
+                      box_fk: 1000
+                      box_section_fk: 1000
+                      scale_fk:
+                      workout_fk: 1000
+                      box_category_fk: 1000
+                      title_section_box_fk:
+                      name: '2026-11-22'
+                      comment: "SAMPLE SECTION TEXT\n10 SAMPLE REPS"
+                      skill_reps:
+                      skill_weight_male_rx:
+                      skill_weight_female_rx:
+                      skill_weight_percentage:
+                      type_instruct:
+                      rounds:
+                      total_time:
+                      total_perfect_time_result_male:
+                      total_perfect_time_result_female:
+                      total_perfect_rounds_result_male:
+                      total_perfect_rounds_result_female:
+                      total_rounds:
+                      created_at: '2026-11-21T17:22:18.000000Z'
+                      updated_at: '2026-11-21T17:22:18.000000Z'
+                      deleted_at:
+                      has_leader_board: true
+                      scales:
+                      box_categories:
+                        id: 1000
+                        name: Sample Name
+                        color_name: false
+                      box_sections:
+                        id: 1000
+                        name: Sample Name
+                        order: 1
+                      workout_type:
+                        id: 1000
+                        name: Sample Name
+                      title_section_box:
+                      user_result:
+                      scales_many:
+                      boxes:
+                        id: 1000
+                        name: Sample Name
+                        cloudinary_image: REDACTED
+                  - - id: 1000
+                      workout_id: 1000
+                      box_fk: 1000
+                      box_section_fk: 1000
+                      scale_fk:
+                      workout_fk: 1000
+                      box_category_fk: 1000
+                      title_section_box_fk:
+                      name: '2026-11-22'
+                      comment: "SAMPLE SECTION TEXT\n10 SAMPLE REPS"
+                      skill_reps:
+                      skill_weight_male_rx:
+                      skill_weight_female_rx:
+                      skill_weight_percentage:
+                      type_instruct:
+                      rounds:
+                      total_time:
+                      total_perfect_time_result_male:
+                      total_perfect_time_result_female:
+                      total_perfect_rounds_result_male:
+                      total_perfect_rounds_result_female:
+                      total_rounds:
+                      created_at: '2026-11-21T17:22:18.000000Z'
+                      updated_at: '2026-11-21T17:22:18.000000Z'
+                      deleted_at:
+                      scales:
+                      box_categories:
+                        id: 1000
+                        name: Sample Name
+                        color_name: false
+                      box_sections:
+                        id: 1000
+                        name: Sample Name
+                        order: 1
+                      workout_type:
+                        id: 1000
+                        name: Sample Name
+                      title_section_box:
+                      user_result:
+                      scales_many:
+                  - - id: 1000
+                      workout_id: 1000
+                      box_fk: 1000
+                      box_section_fk: 1000
+                      scale_fk:
+                      workout_fk: 1000
+                      box_category_fk: 1000
+                      title_section_box_fk:
+                      name: '2026-11-22'
+                      comment: "SAMPLE SECTION TEXT\n10 SAMPLE REPS"
+                      skill_reps:
+                      skill_weight_male_rx:
+                      skill_weight_female_rx:
+                      skill_weight_percentage:
+                      type_instruct:
+                      rounds:
+                      total_time: 16
+                      total_perfect_time_result_male:
+                      total_perfect_time_result_female:
+                      total_perfect_rounds_result_male:
+                      total_perfect_rounds_result_female:
+                      total_rounds:
+                      created_at: '2026-11-21T17:22:18.000000Z'
+                      updated_at: '2026-11-21T17:22:18.000000Z'
+                      deleted_at:
+                      scales:
+                      box_categories:
+                        id: 1000
+                        name: Sample Name
+                        color_name: false
+                      box_sections:
+                        id: 1000
+                        name: Sample Name
+                        order: 1
+                      workout_type:
+                        id: 1000
+                        name: Sample Name
+                      title_section_box:
+                      user_result:
+                      scales_many:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+            example:
+              date: '2026-11-22'
+x-path-templates:
+# Remove the ignore: prefix to generate an endpoint with its URL
+# Lines that are closer to the top take precedence, the matching is greedy
+- ignore:/api/v2/boxes/locations
+- ignore:/api/v2/logbook/leaderBoard/{id}/{id1}/{id2}
+- ignore:/api/v2/logbook/leaderBoard/1000/1000/1000
+- ignore:/api/v2/logbook/userResultsByDates
+- ignore:/api/v2/user/deviceToken
+- ignore:/api/v2/user/feed
+- ignore:/api/v2/user/profile
+- ignore:/api/v2/user/settings/changeLanguage

@@ -162,6 +162,14 @@ def load_session(path: Path | None = None) -> dict[str, str]:
     raise CrossFitEyAuthError(f"No CrossFitEY session found. {RELOGIN_HINT}")
 
 
+def session_token(cookies: dict[str, str]) -> str | None:
+    """The NextAuth session-token value, whatever cookie prefix the site uses."""
+    for name, value in cookies.items():
+        if name.endswith("session-token"):
+            return value
+    return None
+
+
 def save_session(cookies: dict[str, str], path: Path | None = None) -> Path:
     session_file = Path(path or config.crossfitey_session_path())
     session_file.parent.mkdir(parents=True, exist_ok=True)
@@ -178,6 +186,7 @@ class CrossFitEyClient:
         self._session = session or requests.Session()
         self._session.headers["user-agent"] = _USER_AGENT
         self._session.cookies.update(cookies)
+        self._initial_token = session_token(cookies)
 
     def _fetch_week(self, offset: int) -> str:
         resp = self._session.get(
@@ -197,3 +206,10 @@ class CrossFitEyClient:
         today = today or datetime.now(config.TIMEZONE).date()
         offset = week_offset(day, today)
         return select_workout(day, extract_workouts(self._fetch_week(offset)))
+
+    def current_cookies(self) -> dict[str, str]:
+        return requests.utils.dict_from_cookiejar(self._session.cookies)
+
+    def session_changed(self) -> bool:
+        """True if the server rotated the session token since login (needs saving back)."""
+        return session_token(self.current_cookies()) != self._initial_token

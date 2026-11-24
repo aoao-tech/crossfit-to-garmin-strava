@@ -85,6 +85,9 @@ def sync(day: date, days: int, apply: bool) -> None:
     except (ArboxAuthError, GarminAuthError) as exc:
         click.echo(f"ERROR: {exc}", err=True)
         sys.exit(EXIT_AUTH)
+    if crossfitey_client is not None and crossfitey_client.session_changed():
+        path = save_session(crossfitey_client.current_cookies())
+        click.echo(f"CrossFitEY session refreshed, saved to {path}")
     summary = " ".join(f"{o.value}={counts[o]}" for o in Outcome if counts[o])
     click.echo(f"{'' if apply else 'DRY RUN (use --apply to write): '}{days} days: {summary}")
     if counts[Outcome.AMBIGUOUS]:

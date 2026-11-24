@@ -9,6 +9,7 @@ from arbox_sync.crossfitey_client import (
     load_session,
     save_session,
     select_workout,
+    session_token,
     week_offset,
     workout_to_wod,
 )
@@ -124,3 +125,24 @@ def test_get_wod_parses_matching_week():
     client._fetch_week = lambda offset: FLIGHT  # type: ignore[method-assign]
     wod = client.get_wod(DAY, today=DAY)
     assert wod is not None and "Wall Balls" in wod.text
+
+
+# --- session rotation / auto-renewal --------------------------------------
+
+def test_session_token_finds_the_cookie_regardless_of_prefix():
+    assert session_token({"__Secure-next-auth.session-token": "abc"}) == "abc"
+    assert session_token({"next-auth.session-token": "def"}) == "def"
+    assert session_token({"csrf": "x"}) is None
+
+
+def test_session_unchanged_when_only_an_extra_cookie_is_added():
+    client = CrossFitEyClient({"__Secure-next-auth.session-token": "tok"})
+    client._session.cookies.set("csrf", "x")
+    assert client.session_changed() is False
+
+
+def test_session_changed_when_the_token_rotates():
+    client = CrossFitEyClient({"__Secure-next-auth.session-token": "old"})
+    assert client.session_changed() is False
+    client._session.cookies.set("__Secure-next-auth.session-token", "new")
+    assert client.session_changed() is True

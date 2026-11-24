@@ -57,12 +57,24 @@ jobs:
           printf '%s' "$GARMIN_TOKENS" > "$RUNNER_TEMP/garmin_tokens.json"
           sha256sum "$RUNNER_TEMP/garmin_tokens.json" | cut -d' ' -f1 > "$RUNNER_TEMP/tokens.sha"
 
+      - name: Restore CrossFitEY session from secret (optional)
+        env:
+          CROSSFITEY_SESSION: ${{ secrets.CROSSFITEY_SESSION }}
+        run: |
+          if [ -z "$CROSSFITEY_SESSION" ]; then
+            echo "No CrossFitEY session set; the sync will use Arbox only."
+            exit 0
+          fi
+          umask 077
+          printf '%s' "$CROSSFITEY_SESSION" > "$RUNNER_TEMP/crossfitey_session.json"
+          sha256sum "$RUNNER_TEMP/crossfitey_session.json" | cut -d' ' -f1 > "$RUNNER_TEMP/crossfitey.sha"
+
       - name: Sync
         env:
           GARMIN_TOKEN_PATH: ${{ runner.temp }}/garmin_tokens.json
           ARBOX_TOKEN: ${{ secrets.ARBOX_TOKEN }}
-          # Optional second box. Empty when the secret is not set: the sync then uses Arbox only.
-          CROSSFITEY_SESSION: ${{ secrets.CROSSFITEY_SESSION }}
+          # Optional second box. The file is absent when the secret is unset: the sync uses Arbox only.
+          CROSSFITEY_SESSION_PATH: ${{ runner.temp }}/crossfitey_session.json
           INPUT_DATE: ${{ inputs.date }}
           INPUT_BACKFILL: ${{ inputs.backfill }}
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
@@ -71,10 +83,14 @@ jobs:
             echo "::error::ARBOX_TOKEN secret is not set. Run 'arbox login' on your computer and add it."
             exit 1
           fi
+          # Dry runs are verbose so a manual check shows the per-day box decision
+          # (which box was chosen). These debug lines carry dates only, never tokens
+          # or workout text. Scheduled runs stay quiet (counts only).
+          vflag=""
           args=(sync --backfill "${INPUT_BACKFILL:-3}")
           if [ -n "$INPUT_DATE" ]; then args+=(--date "$INPUT_DATE"); fi
-          if [ "$INPUT_DRY_RUN" != "true" ]; then args+=(--apply); fi
-          python -m arbox_sync "${args[@]}"
+          if [ "$INPUT_DRY_RUN" = "true" ]; then vflag="-v"; else args+=(--apply); fi
+          python -m arbox_sync $vflag "${args[@]}"
 
       - name: Save refreshed Garmin tokens back to the secret
         if: always()
@@ -95,6 +111,26 @@ jobs:
           echo "Saved refreshed tokens."
         shell: bash
 
-      - name: Remove token file
+      - name: Save refreshed CrossFitEY session back to the secret
         if: always()
-        run: rm -f "$RUNNER_TEMP/garmin_tokens.json"
+        env:
+          GH_TOKEN: ${{ secrets.SECRETS_PAT }}
+        run: |
+          f="$RUNNER_TEMP/crossfitey_session.json"
+          [ -f "$f" ] || exit 0
+          [ -f "$RUNNER_TEMP/crossfitey.sha" ] || exit 0
+          if [ "$(sha256sum "$f" | cut -d' ' -f1)" = "$(cat "$RUNNER_TEMP/crossfitey.sha")" ]; then
+            echo "CrossFitEY session unchanged."
+            exit 0
+          fi
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::CrossFitEY session refreshed but SECRETS_PAT is not set, so it was not saved."
+            exit 0
+          fi
+          gh secret set CROSSFITEY_SESSION --repo "$GITHUB_REPOSITORY" < "$f"
+          echo "Saved refreshed CrossFitEY session."
+        shell: bash
+
+      - name: Remove token files
+        if: always()
+        run: rm -f "$RUNNER_TEMP/garmin_tokens.json" "$RUNNER_TEMP/crossfitey_session.json"

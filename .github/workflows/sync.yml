@@ -104,11 +104,14 @@ jobs:
             exit 0
           fi
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::Garmin refreshed the tokens but SECRETS_PAT is not set, so they were not saved."
-            exit 1
+            echo "::warning::Garmin refreshed the tokens but SECRETS_PAT is not set, so they were not saved."
+            exit 0
           fi
-          gh secret set GARMIN_TOKENS --repo "$GITHUB_REPOSITORY" < "$f"
-          echo "Saved refreshed tokens."
+          if gh secret set GARMIN_TOKENS --repo "$GITHUB_REPOSITORY" < "$f"; then
+            echo "Saved refreshed tokens."
+          else
+            echo "::warning::Could not save refreshed Garmin tokens (check SECRETS_PAT). The sync itself succeeded."
+          fi
         shell: bash
 
       - name: Save refreshed CrossFitEY session back to the secret
@@ -127,8 +130,11 @@ jobs:
             echo "::warning::CrossFitEY session refreshed but SECRETS_PAT is not set, so it was not saved."
             exit 0
           fi
-          gh secret set CROSSFITEY_SESSION --repo "$GITHUB_REPOSITORY" < "$f"
-          echo "Saved refreshed CrossFitEY session."
+          if gh secret set CROSSFITEY_SESSION --repo "$GITHUB_REPOSITORY" < "$f"; then
+            echo "Saved refreshed CrossFitEY session."
+          else
+            echo "::warning::Could not save refreshed CrossFitEY session (check SECRETS_PAT). The sync itself succeeded."
+          fi
         shell: bash
 
       - name: Remove token files

@@ -6,8 +6,9 @@ name: sync
 
 on:
   schedule:
-    # 20:00 UTC = 22:00 (winter) / 23:00 (summer) in Israel, every 2nd day of the month.
-    - cron: "0 20 */2 * *"
+    # 20:17 UTC = 22:17 (winter) / 23:17 (summer) in Israel, every 2nd day of the month.
+    # Off the top of the hour on purpose: GitHub delays or drops scheduled runs at :00 most.
+    - cron: "17 20 */2 * *"
   workflow_dispatch:
     inputs:
       date:

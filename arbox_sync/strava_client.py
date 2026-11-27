@@ -32,7 +32,7 @@ RELOGIN_HINT = (
 MAX_PAGES = 5
 START_TOLERANCE = timedelta(minutes=2)
 REMEMBER_PREFIX = "strava_remember"  # strava_remember_id + strava_remember_token ("Remember me")
-_USER_AGENT = "garmin-to-arbox"
+_USER_AGENT = "crossfit-to-garmin-strava"
 _CSRF_RE = re.compile(r'<meta name="csrf-token" content="([^"]+)"')
 
 

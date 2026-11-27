@@ -1,4 +1,4 @@
-# garmin-to-arbox
+# crossfit-to-garmin-strava
 
 Automatically puts your CrossFit box's workout of the day (WOD) into your **Garmin Connect** activity, and optionally into the same activity on **Strava** (see [Strava](#strava-optional)). It reads the WOD from **Arbox**, and if you train at a second box too, it works out which box each session belongs to and uses that box's WOD (see [Two boxes](#two-boxes)).
 
@@ -7,7 +7,8 @@ You record your class on your Garmin watch as a HIIT activity. Later, this tool 
 - **Title:** `CrossFit WOD`
 - **Description:** the full workout from Arbox, every section (warm-up, strength, metcon...), as your box published it.
 
-Unofficial project. Not affiliated with, endorsed by, or supported by Arbox, Garmin or Strava. Use it with your own accounts only.
+Unofficial project. Not affiliated with, endorsed by, or supported by CrossFit, Arbox, Garmin or Strava. Use it with your own accounts only.
+CrossFit is a registered trademark of CrossFit, LLC; Garmin and Strava are trademarks of their owners. They are named here only to describe what the tool works with.
 
 ## How it decides what to do
 
@@ -95,8 +96,8 @@ you missed (within the lookback).
 ## One-time setup
 
 ```bash
-git clone https://github.com/aoao-tech/garmin-to-arbox.git
-cd garmin-to-arbox
+git clone https://github.com/aoao-tech/crossfit-to-garmin-strava.git
+cd crossfit-to-garmin-strava
 python -m venv .venv
 # Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
 pip install -e ".[dev]"

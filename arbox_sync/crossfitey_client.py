@@ -25,7 +25,7 @@ RELOGIN_HINT = (
     "Run `python -m arbox_sync crossfitey login` on your own computer "
     "and update the CROSSFITEY_SESSION secret."
 )
-_USER_AGENT = "garmin-to-arbox"
+_USER_AGENT = "crossfit-to-garmin-strava"
 
 
 class CrossFitEyAuthError(Exception):

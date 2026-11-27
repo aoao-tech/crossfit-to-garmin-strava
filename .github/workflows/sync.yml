@@ -1,14 +1,17 @@
 # Writes each day's WOD (from the right box) into that day's Garmin HIIT/cardio activity, and Strava's copy of it.
-# Runs every 2 days in the evening (Israel time) and can be started by hand.
+# Runs every night (Israel time) with an early-morning backup run, and can be started by hand.
 # Logs print counts only, never names, IDs, tokens or workout text.
 # A failed login fails the run, so GitHub emails the repository owner (Strava also fails a run a few days before its monthly login expires).
 name: sync
 
 on:
   schedule:
-    # 20:17 UTC = 22:17 (winter) / 23:17 (summer) in Israel, every 2nd day of the month.
-    # Off the top of the hour on purpose: GitHub delays or drops scheduled runs at :00 most.
-    - cron: "17 20 */2 * *"
+    # Every night at 20:17 UTC = 22:17 Israel (23:17 in summer).
+    # Backup at 03:17 UTC = 05:17 Israel (06:17 in summer): GitHub sometimes delays or drops
+    # scheduled runs, and the sync never writes twice, so an extra run is free insurance.
+    # Both are off the top of the hour on purpose: GitHub delays or drops :00 runs the most.
+    - cron: "17 20 * * *"
+    - cron: "17 3 * * *"
   workflow_dispatch:
     inputs:
       date:

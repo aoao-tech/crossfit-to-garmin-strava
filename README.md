@@ -157,10 +157,11 @@ python -m arbox_sync strava activities --date 2026-11-22  # list your Strava act
 
 ## Running on a schedule
 
-The `sync` workflow runs automatically in GitHub Actions every 2 days in the evening (Israel time), processing the
-last 5 days, so your computer can stay off. GitHub sometimes delays or drops a scheduled run; 5 days means even a
-dropped run is caught up by the next one. You can also start it by hand from the Actions tab, with an optional date,
-number of days, and a "dry run" switch.
+The `sync` workflow runs automatically in GitHub Actions **every night at 22:17** Israel time, with a **backup run at
+05:17**, processing the last 5 days each time, so your computer can stay off. GitHub sometimes delays or drops a
+scheduled run; the backup run and the 5-day window mean a missed run is simply caught up by the next one, and since
+the sync never writes an activity twice, extra runs are harmless. You can also start it by hand from the Actions tab,
+with an optional date, number of days, and a "dry run" switch.
 
 The workflow needs these secrets:
 

@@ -55,7 +55,7 @@ def test_default_names():
 def test_build_update_for_untouched_activity():
     update = build_update(act(), WOD)
     assert update.name == "CrossFit WOD"
-    assert update.description == "Metcon\n12 SAMPLE PUSH PRESS\n\n" + config.SYNC_MARKER
+    assert update.description == "Metcon\n12 SAMPLE PUSH PRESS\n\n" + config.SYNC_FOOTER
 
 
 def test_already_synced_activity_is_skipped():
@@ -113,7 +113,7 @@ def test_already_synced_does_not_call_arbox():
 def test_match_writes_once():
     garmin, arbox = FakeGarmin({DAY: (act(),)}), FakeArbox()
     assert sync_day(DAY, garmin, arbox, dry_run=False) == Outcome.UPDATED
-    assert garmin.updates == [(1, "CrossFit WOD", "Metcon\n12 SAMPLE PUSH PRESS\n\n" + config.SYNC_MARKER)]
+    assert garmin.updates == [(1, "CrossFit WOD", "Metcon\n12 SAMPLE PUSH PRESS\n\n" + config.SYNC_FOOTER)]
 
 
 def test_dry_run_never_writes():
@@ -136,3 +136,15 @@ def test_run_sync_covers_window_and_counts():
     counts = run_sync(DAY, days=2, garmin=garmin, arbox=FakeArbox(), dry_run=False)
     assert counts[Outcome.UPDATED] == 1
     assert counts[Outcome.NO_TRAINING] == 1
+
+
+# --- marker and footer ------------------------------------------------------
+
+def test_footer_carries_the_marker_and_the_project_link():
+    assert config.SYNC_FOOTER.startswith(config.SYNC_MARKER)
+    assert "Synced automatically" in config.SYNC_FOOTER
+    assert config.PROJECT_URL in config.SYNC_FOOTER
+
+
+def test_activity_with_the_old_marker_counts_as_synced():
+    assert build_update(act(desc="old WOD\n\n[arbox-sync]"), WOD) is None

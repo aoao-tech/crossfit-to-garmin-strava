@@ -5,7 +5,13 @@ Automatically puts your CrossFit box's workout of the day (WOD) into your **Garm
 You record your class on your Garmin watch as a HIIT activity. Later, this tool finds that activity and sets:
 
 - **Title:** `CrossFit WOD`
-- **Description:** the full workout from Arbox, every section (warm-up, strength, metcon...), as your box published it.
+- **Description:** the full workout from Arbox, every section (warm-up, strength, metcon...), as your box published it,
+  followed by a short footer:
+
+  ```
+  [wod-sync] Synced automatically
+  For more info: https://github.com/aoao-tech/crossfit-to-garmin-strava
+  ```
 
 Unofficial project. Not affiliated with, endorsed by, or supported by CrossFit, Arbox, Garmin or Strava. Use it with your own accounts only.
 CrossFit is a registered trademark of CrossFit, LLC; Garmin and Strava are trademarks of their owners. They are named here only to describe what the tool works with.
@@ -19,7 +25,7 @@ Garmin decides, Arbox only fills in. For each day:
 | No HIIT or cardio activity | Treated as a rest day. Arbox is not contacted. |
 | Exactly one HIIT/cardio activity | That day's WOD is fetched from Arbox and written into it. |
 | Two or more HIIT/cardio activities | Nothing is changed, a warning is printed. |
-| Activity already synced (ends with `[arbox-sync]`) | Skipped. It never edits the same activity twice. |
+| Activity already synced (has the `[wod-sync]` footer) | Skipped. It never edits the same activity twice. |
 | You renamed it or wrote a description yourself | Skipped. Your own edits are never overwritten. |
 | Training recorded but no WOD in Arbox | Nothing is changed. |
 
@@ -186,6 +192,7 @@ Optional environment variables:
 | `SYNC_LOOKBACK_DAYS` | `5` | default number of days per run |
 | `SYNC_ACTIVITY_TYPES` | `hiit,indoor_cardio,cardio` | Garmin activity types that count as a class |
 | `SYNC_FALLBACK_TITLE` | `CrossFit WOD` | title written to the activity |
+| `SYNC_PROJECT_URL` | this repo's URL | the link in the description footer (point it at your fork if you like) |
 | `ARBOX_BOXES_ID` | `23` | your home Arbox box id (used to check registration) |
 | `ARBOX_LOCATIONS_BOX_ID` | `6` | your home Arbox location id |
 | `CROSSFITEY_TRACK` | `CROSSFIT` | which track to read from the second box |

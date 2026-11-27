@@ -40,7 +40,12 @@ TRAINING_TYPE_KEYS = frozenset(
 )
 # Endings of the names Garmin gives new activities of those types ("HIIT", "<City> HIIT", "Cardio"...).
 DEFAULT_NAME_SUFFIXES = ("hiit", "cardio")
-SYNC_MARKER = "[arbox-sync]"
+# Every synced description ends with this footer. The marker in it is how the sync knows an
+# activity is done (never write twice); older activities carry the legacy marker instead.
+SYNC_MARKER = "[wod-sync]"
+LEGACY_SYNC_MARKERS = ("[arbox-sync]",)
+PROJECT_URL = os.getenv("SYNC_PROJECT_URL", "https://github.com/aoao-tech/crossfit-to-garmin-strava")
+SYNC_FOOTER = f"{SYNC_MARKER} Synced automatically\nFor more info: {PROJECT_URL}"
 # Runs are every 2 days; 5 days back still covers every day if GitHub drops one scheduled run.
 DEFAULT_LOOKBACK_DAYS = int(os.getenv("SYNC_LOOKBACK_DAYS", "5"))
 

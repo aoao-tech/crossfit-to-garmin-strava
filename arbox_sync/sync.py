@@ -67,6 +67,11 @@ def is_default_name(name: str) -> bool:
     return name.strip().lower().endswith(config.DEFAULT_NAME_SUFFIXES)
 
 
+def has_sync_marker(description: str) -> bool:
+    """True if this tool already wrote the description (current or legacy marker)."""
+    return any(m in description for m in (config.SYNC_MARKER, *config.LEGACY_SYNC_MARKERS))
+
+
 def is_untouched_text(name: str, description: str) -> bool:
     """Still exactly as the watch/app created it: default name and no description."""
     return not description.strip() and is_default_name(name)
@@ -77,9 +82,9 @@ def is_untouched(activity: Activity) -> bool:
 
 
 def build_update(activity: Activity, wod: Wod) -> Update | None:
-    if config.SYNC_MARKER in activity.description or not is_untouched(activity):
+    if has_sync_marker(activity.description) or not is_untouched(activity):
         return None
-    description = f"{wod.text}\n\n{config.SYNC_MARKER}"
+    description = f"{wod.text}\n\n{config.SYNC_FOOTER}"
     return Update(activity.activity_id, wod.title, description)
 
 
@@ -127,7 +132,7 @@ def sync_day(day: date, garmin: Any, arbox: Any, crossfitey: Any = None, *, dry_
     if activity is None:
         logger.debug("%s: %s", day, outcome.value)
         return outcome
-    if config.SYNC_MARKER in activity.description or not is_untouched(activity):
+    if has_sync_marker(activity.description) or not is_untouched(activity):
         logger.debug("%s: activity already synced or edited by hand", day)
         return Outcome.SKIPPED
     wod = wods.get(day) if wods is not None else resolve_wod(day, arbox, crossfitey)
@@ -155,7 +160,7 @@ def sync_strava_day(day: date, activities: tuple[Activity, ...], strava: Any, wo
     if match is None:
         logger.debug("%s: Strava doesn't have this activity yet", day)
         return StravaOutcome.NOT_FOUND
-    if config.SYNC_MARKER in match.description or not is_untouched_text(match.name, match.description):
+    if has_sync_marker(match.description) or not is_untouched_text(match.name, match.description):
         logger.debug("%s: Strava activity already synced or edited by hand", day)
         return StravaOutcome.SKIPPED
     wod = wods.get(day)
@@ -164,7 +169,7 @@ def sync_strava_day(day: date, activities: tuple[Activity, ...], strava: Any, wo
     if dry_run:
         logger.debug("%s: would update the Strava activity too", day)
         return StravaOutcome.WOULD_UPDATE
-    strava.update_activity(match, name=wod.title, description=f"{wod.text}\n\n{config.SYNC_MARKER}")
+    strava.update_activity(match, name=wod.title, description=f"{wod.text}\n\n{config.SYNC_FOOTER}")
     return StravaOutcome.UPDATED
 
 

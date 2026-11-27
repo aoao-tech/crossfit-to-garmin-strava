@@ -72,7 +72,7 @@ def test_no_matching_strava_activity_yet():
 def test_default_strava_activity_gets_the_wod():
     strava = FakeStrava([strava_act()])
     assert sync_strava_day(DAY, (garmin_act(),), strava, resolver(), dry_run=False) == StravaOutcome.UPDATED
-    assert strava.updates == [("99", "CrossFit WOD", "Metcon\nBOX WOD TEXT\n\n" + config.SYNC_MARKER)]
+    assert strava.updates == [("99", "CrossFit WOD", "Metcon\nBOX WOD TEXT\n\n" + config.SYNC_FOOTER)]
 
 
 def test_strava_written_even_when_garmin_was_already_synced():
@@ -125,3 +125,8 @@ def test_strava_network_error_is_counted_and_garmin_continues():
     strava = FakeStrava(raises=RuntimeError("boom"))
     counts = run_sync(DAY, days=1, garmin=garmin, arbox=FakeArbox(), strava=strava, dry_run=False)
     assert counts[Outcome.UPDATED] == 1 and counts[StravaOutcome.ERROR] == 1
+
+
+def test_strava_activity_with_the_old_marker_is_skipped():
+    strava = FakeStrava([strava_act(name="CrossFit WOD", desc="w\n\n[arbox-sync]")])
+    assert sync_strava_day(DAY, (garmin_act(),), strava, resolver(), dry_run=False) == StravaOutcome.SKIPPED

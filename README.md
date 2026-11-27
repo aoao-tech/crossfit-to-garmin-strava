@@ -57,12 +57,14 @@ applies: every day just uses Arbox.
 
 ## Strava (optional)
 
-Strava copies each activity from Garmin, so the same workout shows up there under a default name
-like "Evening HIIT". If you set up Strava, every run also writes the same title and WOD there:
+Your watch's recording reaches Strava through Garmin's usual connection to Strava, so the same
+workout appears there under a default name like "Evening HIIT". The **WOD text** is a different
+story: Strava doesn't get it from Garmin. If you set up Strava, the tool writes the WOD there
+itself, straight from your box, exactly as it does for Garmin:
 
 1. For each training day, the WOD is worked out **once** (from the right box, as above).
-2. It's written to Garmin, then to the Strava activity that **started at the same time** as the
-   Garmin one.
+2. It's written to Garmin, and separately to the Strava activity that **started at the same time**
+   as the Garmin one (that's how the tool finds the same workout on both).
 3. Strava follows the same rules on its own: skipped if it's already synced, or if you renamed it or
    wrote a description. If Strava hasn't received the activity yet, a later run catches it.
 

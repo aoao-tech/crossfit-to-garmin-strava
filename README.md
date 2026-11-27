@@ -1,13 +1,13 @@
 # garmin-to-arbox
 
-Automatically puts your CrossFit box's workout of the day (WOD) into your **Garmin Connect** activity. It reads the WOD from **Arbox**, and if you train at a second box too, it works out which box each session belongs to and uses that box's WOD (see [Two boxes](#two-boxes)).
+Automatically puts your CrossFit box's workout of the day (WOD) into your **Garmin Connect** activity, and optionally into the same activity on **Strava** (see [Strava](#strava-optional)). It reads the WOD from **Arbox**, and if you train at a second box too, it works out which box each session belongs to and uses that box's WOD (see [Two boxes](#two-boxes)).
 
 You record your class on your Garmin watch as a HIIT activity. Later, this tool finds that activity and sets:
 
 - **Title:** `CrossFit WOD`
 - **Description:** the full workout from Arbox, every section (warm-up, strength, metcon...), as your box published it.
 
-Unofficial project. Not affiliated with, endorsed by, or supported by Arbox or Garmin. Use it with your own accounts only.
+Unofficial project. Not affiliated with, endorsed by, or supported by Arbox, Garmin or Strava. Use it with your own accounts only.
 
 ## How it decides what to do
 
@@ -48,13 +48,49 @@ It looks up the correct week for each day, so a session synced a day or two late
 the previous week — still gets the right WOD. If you never set up a second box, none of this
 applies: every day just uses Arbox.
 
+## Strava (optional)
+
+Strava copies each activity from Garmin, so the same workout shows up there under a default name
+like "Evening HIIT". If you set up Strava, every run also writes the same title and WOD there:
+
+1. For each training day, the WOD is worked out **once** (from the right box, as above).
+2. It's written to Garmin, then to the Strava activity that **started at the same time** as the
+   Garmin one.
+3. Strava follows the same rules on its own: skipped if it's already synced, or if you renamed it or
+   wrote a description. If Strava hasn't received the activity yet, a later run catches it.
+
+A Strava problem never stops the Garmin sync.
+
+**Why it uses the website.** Strava's app requires Google Play Integrity (a check that the app runs
+unmodified on a real phone), so a script can't use the app's API. This tool makes the same calls the
+strava.com website makes, with your browser's login. Strava's terms don't allow automating the
+website, so this is at your own risk. The clean alternative is Strava's official API, but writing to
+activities through it needs a paid Strava subscription.
+
+**Logging in, about once a month.** Strava's "Remember me" login lasts 30 days and does not renew
+itself:
+
+1. Open strava.com in a private (Incognito) window and log in **with your email** (not Google),
+   with **Remember me** ticked.
+2. Press F12 → **Network** → reload the page → click the `training` row → **Request Headers** →
+   right-click the `cookie:` value → **Copy value**.
+3. Run `python -m arbox_sync strava login` and paste it (the prompt hides it). It keeps only the two
+   "Remember me" cookies, saves them, and prints the date they expire.
+4. Put the saved session file's contents in the `STRAVA_SESSION` secret.
+5. Close the window **without logging out**: logging out would end that login.
+
+Three days before the login expires, a run fails on purpose so GitHub emails you while Strava still
+works. If you miss it, Strava is skipped until you log in again, and the next run fills in the days
+you missed (within the lookback).
+
 ## Requirements
 
 - Python 3.12 or newer
 - A Garmin Connect account
 - An Arbox member account with a password (the app's "Log in with password" option)
 - Optional: a second box on the "Box WOD" platform, if you sometimes train somewhere
-  else (see [Two boxes](#two-boxes) below)
+  else (see [Two boxes](#two-boxes) above)
+- Optional: a Strava account connected to Garmin (see [Strava](#strava-optional) above)
 
 ## One-time setup
 
@@ -71,7 +107,8 @@ Log in to both services once. You type your passwords, and only login tokens are
 ```bash
 python -m arbox_sync garmin login       # asks for email, password, and an MFA code if your account has one
 python -m arbox_sync arbox login        # asks for email and password
-python -m arbox_sync crossfitey login   # optional: only if you use a second box (see below)
+python -m arbox_sync crossfitey login   # optional: only if you use a second box
+python -m arbox_sync strava login       # optional: only for Strava; paste your browser's cookie (see Strava)
 ```
 
 ## Running it
@@ -79,8 +116,8 @@ python -m arbox_sync crossfitey login   # optional: only if you use a second box
 Preview first. A dry run changes nothing:
 
 ```bash
-python -m arbox_sync sync                 # last 3 days, dry run
-python -m arbox_sync sync --apply         # last 3 days, writes to Garmin
+python -m arbox_sync sync                 # last 5 days, dry run
+python -m arbox_sync sync --apply         # last 5 days, writes to Garmin (and Strava if set up)
 ```
 
 Options:
@@ -88,8 +125,8 @@ Options:
 | Option | Meaning |
 |---|---|
 | `--date YYYY-MM-DD` | last day to process (default: today, Asia/Jerusalem time) |
-| `--backfill N` | process N days ending at `--date` (default 3) |
-| `--apply` | actually write to Garmin; without it nothing changes |
+| `--backfill N` | process N days ending at `--date` (default 5) |
+| `--apply` | actually write to Garmin and Strava; without it nothing changes |
 
 ### Backfill
 
@@ -106,26 +143,30 @@ python -m arbox_sync sync --backfill 30 --apply    # then do it
 python -m arbox_sync arbox wod --date 2026-11-22          # show a day's WOD as JSON
 python -m arbox_sync garmin activities --date 2026-11-22  # list your Garmin activities that day
 python -m arbox_sync garmin check                         # quick read-only Garmin login check
+python -m arbox_sync strava activities --date 2026-11-22  # list your Strava activities that day
 ```
 
 ## Running on a schedule
 
 The `sync` workflow runs automatically in GitHub Actions every 2 days in the evening (Israel time), processing the
-last 3 days, so your computer can stay off and a missed run catches up on the next one. You can also start it by hand
-from the Actions tab, with an optional date, number of days, and a "dry run" switch.
+last 5 days, so your computer can stay off. GitHub sometimes delays or drops a scheduled run; 5 days means even a
+dropped run is caught up by the next one. You can also start it by hand from the Actions tab, with an optional date,
+number of days, and a "dry run" switch.
 
-The workflow needs these three secrets:
+The workflow needs these secrets:
 
 | Secret | What it is |
 |---|---|
 | `GARMIN_TOKENS` | the Garmin login tokens created by `garmin login` |
 | `ARBOX_TOKEN` | the Arbox login token created by `arbox login` |
 | `CROSSFITEY_SESSION` | optional: the second box's session created by `crossfitey login`, only if you use one |
-| `SECRETS_PAT` | a fine-grained GitHub token, limited to this repository with Secrets read/write, so the workflow can save Garmin's refreshed tokens |
+| `STRAVA_SESSION` | optional: the Strava "Remember me" login saved by `strava login`, only for Strava (renew monthly) |
+| `SECRETS_PAT` | a fine-grained GitHub token, limited to this repository with Secrets read/write, so the workflow can save logins that get refreshed |
 
 The included `garmin-smoke` workflow is a manual, read-only check that the Garmin tokens work from GitHub.
 
 If a login ever expires, the run fails with a clear message. Run the matching `login` command again and update that secret.
+The Strava login also warns you a few days early (see [Strava](#strava-optional)).
 
 ## Privacy and safety
 
@@ -141,12 +182,13 @@ Optional environment variables:
 | Variable | Default | Meaning |
 |---|---|---|
 | `SYNC_TIMEZONE` | `Asia/Jerusalem` | timezone used for "today" |
-| `SYNC_LOOKBACK_DAYS` | `3` | default number of days per run |
+| `SYNC_LOOKBACK_DAYS` | `5` | default number of days per run |
 | `SYNC_ACTIVITY_TYPES` | `hiit,indoor_cardio,cardio` | Garmin activity types that count as a class |
 | `SYNC_FALLBACK_TITLE` | `CrossFit WOD` | title written to the activity |
 | `ARBOX_BOXES_ID` | `23` | your home Arbox box id (used to check registration) |
 | `ARBOX_LOCATIONS_BOX_ID` | `6` | your home Arbox location id |
 | `CROSSFITEY_TRACK` | `CROSSFIT` | which track to read from the second box |
+| `STRAVA_RENEW_WARN_DAYS` | `3` | how many days before the Strava login expires a run fails to warn you |
 
 ## How the Arbox part was built
 
@@ -154,6 +196,8 @@ Arbox has no public member API. The app's own requests were recorded once from a
 personal data, and documented in [`api/API_NOTES.md`](api/API_NOTES.md) and [`api/arbox-openapi.yaml`](api/arbox-openapi.yaml)
 (generated with [mitmproxy2swagger](https://github.com/alufers/mitmproxy2swagger)).
 The Garmin part uses [python-garminconnect](https://github.com/cyberjunky/python-garminconnect).
+The Strava part uses three calls of the strava.com website (activity list, the page holding the security token, and
+saving an activity), recorded once from a browser and also listed in [`api/API_NOTES.md`](api/API_NOTES.md).
 
 ## Development
 

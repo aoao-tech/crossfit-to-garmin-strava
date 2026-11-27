@@ -24,6 +24,14 @@ CROSSFITEY_BASE = os.getenv("CROSSFITEY_BASE", "https://crossfitey.fit")
 CROSSFITEY_TRACK = os.getenv("CROSSFITEY_TRACK", "CROSSFIT")
 CROSSFITEY_SESSION_FILENAME = "crossfitey_session.json"
 
+# Optional extra destination: Strava, through the same calls the strava.com website makes
+# (the mobile API requires app attestation). Login is a browser session cookie.
+STRAVA_BASE = os.getenv("STRAVA_BASE", "https://www.strava.com")
+STRAVA_SESSION_FILENAME = "strava_session.json"
+# The Strava "Remember me" login lasts 30 days. This many days before it expires, a run
+# exits with an error on purpose, so GitHub emails you while Strava still works.
+STRAVA_RENEW_WARN_DAYS = int(os.getenv("STRAVA_RENEW_WARN_DAYS", "3"))
+
 FALLBACK_TITLE = os.getenv("SYNC_FALLBACK_TITLE", "CrossFit WOD")
 
 # Garmin activity types that count as a CrossFit session. No such activity on a day = no training.
@@ -33,7 +41,8 @@ TRAINING_TYPE_KEYS = frozenset(
 # Endings of the names Garmin gives new activities of those types ("HIIT", "<City> HIIT", "Cardio"...).
 DEFAULT_NAME_SUFFIXES = ("hiit", "cardio")
 SYNC_MARKER = "[arbox-sync]"
-DEFAULT_LOOKBACK_DAYS = int(os.getenv("SYNC_LOOKBACK_DAYS", "3"))
+# Runs are every 2 days; 5 days back still covers every day if GitHub drops one scheduled run.
+DEFAULT_LOOKBACK_DAYS = int(os.getenv("SYNC_LOOKBACK_DAYS", "5"))
 
 
 def arbox_token_path() -> Path:
@@ -50,6 +59,14 @@ def garmin_token_path() -> Path:
     if override:
         return Path(override).expanduser()
     return Path.home() / ".garmin-to-arbox" / GARMIN_TOKEN_FILENAME
+
+
+def strava_session_path() -> Path:
+    """Where the Strava website session cookie is cached. CI uses STRAVA_SESSION_PATH instead."""
+    override = os.getenv("STRAVA_SESSION_PATH")
+    if override:
+        return Path(override).expanduser()
+    return Path.home() / ".garmin-to-arbox" / STRAVA_SESSION_FILENAME
 
 
 def crossfitey_session_path() -> Path:

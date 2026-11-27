@@ -8,7 +8,7 @@ from arbox_sync.sync import Outcome
 
 
 def _patch(monkeypatch, seen, error=None):
-    def fake_run(end_day, *, days, garmin, arbox, crossfitey, dry_run):
+    def fake_run(end_day, *, days, garmin, arbox, crossfitey, strava, dry_run):
         if error:
             raise error
         seen.update(end_day=end_day, days=days, dry_run=dry_run)
@@ -19,6 +19,7 @@ def _patch(monkeypatch, seen, error=None):
     monkeypatch.setattr(cli, "_garmin", lambda: object())
     monkeypatch.setattr(cli, "_arbox", lambda: object())
     monkeypatch.setattr(cli, "_crossfitey", lambda: None)
+    monkeypatch.setattr(cli, "_strava", lambda: None)
 
 
 def test_sync_is_dry_run_by_default(monkeypatch):
@@ -26,7 +27,7 @@ def test_sync_is_dry_run_by_default(monkeypatch):
     _patch(monkeypatch, seen)
     result = CliRunner().invoke(cli.main, ["sync", "--date", "2026-11-22"])
     assert result.exit_code == 0, result.output
-    assert seen == {"end_day": date(2026, 11, 22), "days": 3, "dry_run": True}
+    assert seen == {"end_day": date(2026, 11, 22), "days": 5, "dry_run": True}
     assert "DRY RUN" in result.output
 
 

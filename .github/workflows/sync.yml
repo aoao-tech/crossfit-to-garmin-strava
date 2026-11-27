@@ -1,7 +1,7 @@
-# Writes each day's Arbox WOD into that day's Garmin HIIT/cardio activity.
+# Writes each day's WOD (from the right box) into that day's Garmin HIIT/cardio activity, and Strava's copy of it.
 # Runs every 2 days in the evening (Israel time) and can be started by hand.
 # Logs print counts only, never names, IDs, tokens or workout text.
-# A failed login fails the run, so GitHub emails the repository owner.
+# A failed login fails the run, so GitHub emails the repository owner (Strava also fails a run a few days before its monthly login expires).
 name: sync
 
 on:
@@ -18,7 +18,7 @@ on:
       backfill:
         description: "How many days to process, ending at the date."
         required: false
-        default: "3"
+        default: "5"
       dry_run:
         description: "Preview only, write nothing."
         type: boolean
@@ -70,12 +70,26 @@ jobs:
           printf '%s' "$CROSSFITEY_SESSION" > "$RUNNER_TEMP/crossfitey_session.json"
           sha256sum "$RUNNER_TEMP/crossfitey_session.json" | cut -d' ' -f1 > "$RUNNER_TEMP/crossfitey.sha"
 
+      - name: Restore Strava session from secret (optional)
+        env:
+          STRAVA_SESSION: ${{ secrets.STRAVA_SESSION }}
+        run: |
+          if [ -z "$STRAVA_SESSION" ]; then
+            echo "No Strava session set; Strava is skipped."
+            exit 0
+          fi
+          umask 077
+          printf '%s' "$STRAVA_SESSION" > "$RUNNER_TEMP/strava_session.json"
+          sha256sum "$RUNNER_TEMP/strava_session.json" | cut -d' ' -f1 > "$RUNNER_TEMP/strava.sha"
+
       - name: Sync
         env:
           GARMIN_TOKEN_PATH: ${{ runner.temp }}/garmin_tokens.json
           ARBOX_TOKEN: ${{ secrets.ARBOX_TOKEN }}
           # Optional second box. The file is absent when the secret is unset: the sync uses Arbox only.
           CROSSFITEY_SESSION_PATH: ${{ runner.temp }}/crossfitey_session.json
+          # Optional extra destination. The file is absent when the secret is unset: Strava is skipped.
+          STRAVA_SESSION_PATH: ${{ runner.temp }}/strava_session.json
           INPUT_DATE: ${{ inputs.date }}
           INPUT_BACKFILL: ${{ inputs.backfill }}
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
@@ -88,7 +102,7 @@ jobs:
           # (which box was chosen). These debug lines carry dates only, never tokens
           # or workout text. Scheduled runs stay quiet (counts only).
           vflag=""
-          args=(sync --backfill "${INPUT_BACKFILL:-3}")
+          args=(sync --backfill "${INPUT_BACKFILL:-5}")
           if [ -n "$INPUT_DATE" ]; then args+=(--date "$INPUT_DATE"); fi
           if [ "$INPUT_DRY_RUN" = "true" ]; then vflag="-v"; else args+=(--apply); fi
           python -m arbox_sync $vflag "${args[@]}"
@@ -138,6 +152,29 @@ jobs:
           fi
         shell: bash
 
+      - name: Save renewed Strava session back to the secret
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.SECRETS_PAT }}
+        run: |
+          f="$RUNNER_TEMP/strava_session.json"
+          [ -f "$f" ] || exit 0
+          [ -f "$RUNNER_TEMP/strava.sha" ] || exit 0
+          if [ "$(sha256sum "$f" | cut -d' ' -f1)" = "$(cat "$RUNNER_TEMP/strava.sha")" ]; then
+            echo "Strava session unchanged."
+            exit 0
+          fi
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::Strava renewed the login but SECRETS_PAT is not set, so it was not saved."
+            exit 0
+          fi
+          if gh secret set STRAVA_SESSION --repo "$GITHUB_REPOSITORY" < "$f"; then
+            echo "Saved renewed Strava session."
+          else
+            echo "::warning::Could not save the renewed Strava session (check SECRETS_PAT). The sync itself succeeded."
+          fi
+        shell: bash
+
       - name: Remove token files
         if: always()
-        run: rm -f "$RUNNER_TEMP/garmin_tokens.json" "$RUNNER_TEMP/crossfitey_session.json"
+        run: rm -f "$RUNNER_TEMP/garmin_tokens.json" "$RUNNER_TEMP/crossfitey_session.json" "$RUNNER_TEMP/strava_session.json"

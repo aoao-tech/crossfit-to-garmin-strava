@@ -5,7 +5,7 @@ Goal: record the traffic between the Arbox app and its servers inside an Android
 All commands below are PowerShell. Run them from the project folder:
 
 ```powershell
-cd C:\path\to\garmin-arbox
+cd C:\path\to\crossfit-to-garmin-strava
 ```
 
 ## 1. Install Android Studio
@@ -88,6 +88,6 @@ In HTTP Toolkit's View tab, clear the list (trash icon) first, then do this in t
 ## 7. Export
 
 1. In HTTP Toolkit, export the traffic as **HAR** (the export/save button in the View tab).
-2. Save it as `C:\path\to\garmin-arbox\captures\raw\arbox.har`. This folder is gitignored and never committed.
+2. Save it as `C:\path\to\crossfit-to-garmin-strava\captures\raw\arbox.har`. This folder is gitignored and never committed.
 3. If HAR export turns out to be locked behind HTTP Toolkit Pro, tell me and I'll switch you to a free capture route.
 4. Then tell me "HAR is ready". **Don't paste it in the chat**, since it contains your password and tokens. I'll sanitize it first and only work from the clean copy. Neither the raw nor the clean HAR is ever committed: this repo will be public, and the traffic may include other members' data.

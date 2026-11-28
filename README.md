@@ -157,11 +157,27 @@ python -m arbox_sync strava activities --date 2026-11-22  # list your Strava act
 
 ## Running on a schedule
 
-The `sync` workflow runs automatically in GitHub Actions **every night at 22:17** Israel time, with a **backup run at
-05:17**, processing the last 5 days each time, so your computer can stay off. GitHub sometimes delays or drops a
-scheduled run; the backup run and the 5-day window mean a missed run is simply caught up by the next one, and since
-the sync never writes an activity twice, extra runs are harmless. You can also start it by hand from the Actions tab,
-with an optional date, number of days, and a "dry run" switch.
+The `sync` workflow runs in GitHub Actions **every 2 days at 22:17** Israel time, processing the last 5 days each
+time, so your computer can stay off. You can also start it by hand from the Actions tab, with an optional date,
+number of days, and a "dry run" switch.
+
+**Why an outside alarm clock.** GitHub's built-in scheduler is "best effort": on small repos it often runs hours late
+or skips runs entirely. So the run is started by [cron-job.org](https://cron-job.org) (free), which calls GitHub's
+"run this workflow" API on time. The workflow's own `schedule:` stays as a backup 1.5 hours later. The sync never
+writes an activity twice, so a doubled run is harmless, and the 5-day window catches up any missed day.
+
+To set it up for your own copy:
+
+1. Create a fine-grained GitHub token: **only this repository**, permission **Actions: Read and write** (nothing
+   else). This token can only start workflow runs: it can't read your code or your secrets.
+2. On cron-job.org, create a cronjob:
+   - **URL:** `https://api.github.com/repos/<you>/<repo>/actions/workflows/sync.yml/dispatches`
+   - **Schedule:** custom, e.g. crontab `17 22 */2 * *`, time zone `Asia/Jerusalem`
+   - **Advanced → Request method:** `POST`, **Request body:** `{"ref":"main"}`
+   - **Headers:** `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`,
+     `Authorization: Bearer <your token>`
+3. Press **Test run** (use a normal browser; its anti-bot check can fail in embedded ones). **204** means it worked,
+   and a new run appears in the Actions tab.
 
 The workflow needs these secrets:
 
